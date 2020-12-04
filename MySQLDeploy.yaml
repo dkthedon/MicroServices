@@ -1,0 +1,100 @@
+apiVersion: v1
+kind: Secret
+metadata:
+ name: mysql-secret
+type: Opaque
+data:
+ MYSQL_ROOT_PASSWORD: UEBzc3cwcmQ=
+ MYSQL_DATABASE: bWljcm9zZXJ2aWNlcw==
+ MYSQL_USER: YXBwX3VzZXI=
+ MYSQL_PASSWORD: QXBwQFBhc3N3MHJk
+ 
+---
+
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+ name: mysql-pv-volume
+ labels:
+  app: mysql-pv
+spec:
+ storageClassName: manual
+ capacity:
+  storage: 500Mi
+ accessModes:
+  - ReadWriteOnce
+ azureFile:
+  # Replace with your secret name
+  secretName: azure-secret
+  # Replace with correct storage share name
+  shareName: k8stest
+  # In case the secret is stored in a different namespace
+  #secretNamespace: default
+  readOnly: false
+
+---
+
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+ name: mysql-pvc-claim
+spec:
+ storageClassName: manual
+ accessModes:
+  - ReadWriteOnce
+ resources:
+  requests:
+   storage: 500Mi
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+ name: mysql-deploy
+ labels:
+  app: mysql-deploy
+spec:
+ replicas: 1
+ strategy: 
+  type: Recreate
+ selector:
+  matchLabels:
+   app: mysql
+ template:
+  metadata:
+   labels: 
+    app: mysql
+  spec:
+   containers:
+    - name: mysql-ctr
+      image: dkthedon/mysql-usersdb:latest
+      envFrom:
+       - secretRef:
+          name: mysql-secret
+      ports:
+       - containerPort: 3306
+      volumeMounts:
+       - name: mysql-persistent-storage
+         mountPath: /var/lib/mysql
+   volumes:
+    - name: mysql-persistent-storage
+      persistentVolumeClaim:
+       claimName: mysql-pvc-claim
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+ name: mysql-service
+ labels:
+  app: mysql
+spec:
+ type: ClusterIP
+ ports:
+  - port: 3306
+    targetPort: 3306
+    protocol: TCP
+ selector:
+  app: mysql

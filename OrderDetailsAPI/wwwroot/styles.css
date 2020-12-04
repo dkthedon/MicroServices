@@ -1,0 +1,29 @@
+﻿body {
+}
+
+.margin-top {
+    margin-top: 20px;
+}
+
+.flex {
+    display: flex;
+}
+
+.flex > div {
+    flex: 0 50%;
+    padding: 10px;
+}
+
+#users-div {
+    min-height: 700px;
+    height: 700px;
+    max-height: 700px;
+    overflow-y: scroll;
+}
+
+#orders-div {
+    min-height: 700px;
+    height: 700px;
+    max-height: 700px;
+    overflow-y: scroll;
+}
